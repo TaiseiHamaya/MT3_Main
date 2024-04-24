@@ -3,15 +3,6 @@
 #include "Vector3D.h"
 #include "Matrix.h"
 
-enum EulerOrder {
-	kXYZ,
-	kXZY,
-	kYXZ,
-	kYZX,
-	kZXY,
-	kZYX
-};
-
 class Quaternion final {
 public:
 	Quaternion() noexcept;
@@ -44,8 +35,6 @@ public:
 	/// <param name="roll">Z軸回転</param>
 	Quaternion(float pitch, float yaw, float roll);
 
-	//Quaternion(float theta_x, float theta_y, float theta_z, EulerOrder order = kXYZ);
-
 public:
 	Quaternion& operator=(const Quaternion& rhs) noexcept;
 	Quaternion& operator=(Quaternion&& rhs) noexcept;
@@ -53,6 +42,8 @@ public:
 	bool operator!=(const Quaternion& rhs) const noexcept;
 	Quaternion operator*(const Quaternion& rhs) const;
 	Quaternion& operator*=(const Quaternion& rhs);
+	Quaternion operator*(float times) const;
+	Quaternion& operator*=(float times);
 
 public:
 	/// <summary>
@@ -61,9 +52,13 @@ public:
 	/// <returns></returns>
 	const Matrix4x4 to_matrix() const;
 
-	//const Vector3 to_euler() const;
+	const float length() const;
 
-	//void normalize();
+	const Quaternion inverse() const;
+
+	static const Quaternion Slerp(const Quaternion& internal, const Quaternion& terminal, float t);
+
+	static const Quaternion& Identity();
 
 private:
 	Vector3 xyz;
