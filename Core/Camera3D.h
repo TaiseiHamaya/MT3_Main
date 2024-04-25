@@ -48,6 +48,9 @@ public:
 
 	static bool IsUpdatedPVMatrix();
 
+	static const Matrix4x4& GetOrthoMatrix();
+	static const Matrix4x4& GetPerspectiveFovMatrix();
+	static const Matrix4x4& GetViewPortMatrix();
 	static const Matrix4x4& GetVPOVMatrix();
 
 public:
@@ -67,7 +70,7 @@ private:// 一つに絞る
 private:
 	Matrix4x4 viewMatrix;
 	Matrix4x4 orthoMatrix;
-	Matrix4x4 persectiveFovMatrix;
+	Matrix4x4 perspectiveFovMatrix;
 	Matrix4x4 viewportMatrix;
 
 	Matrix4x4 vpovMatrix;

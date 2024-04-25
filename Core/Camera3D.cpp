@@ -55,6 +55,18 @@ void Camera3D::DebugGUI() {
 	instance->_DebugGUI();
 }
 
+const Matrix4x4& Camera3D::GetOrthoMatrix() {
+	return instance->orthoMatrix;
+}
+
+const Matrix4x4& Camera3D::GetPerspectiveFovMatrix() {
+	return instance->perspectiveFovMatrix;
+}
+
+const Matrix4x4& Camera3D::GetViewPortMatrix() {
+	return instance->viewportMatrix;
+}
+
 const Matrix4x4& Camera3D::GetVPOVMatrix() {
 	return instance->vpovMatrix;
 }
@@ -69,7 +81,7 @@ void Camera3D::InstanceCameraUpdate() {
 	MakePersectiveFovMatrix();
 	MakeOrthoMatrix();
 	MakeViewportMatrix();
-	vpovMatrix = viewMatrix * persectiveFovMatrix * viewportMatrix;
+	vpovMatrix = viewMatrix * perspectiveFovMatrix * viewportMatrix;
 }
 
 void Camera3D::_DebugGUI() {
@@ -96,7 +108,7 @@ void Camera3D::MakeOrthoMatrix() {
 
 void Camera3D::MakePersectiveFovMatrix() {
 	float cot = 1 / std::tan(fovY / 2);
-	persectiveFovMatrix = {
+	perspectiveFovMatrix = {
 		{{ cot / aspectRatio, 0, 0, 0 },
 		{ 0, cot, 0, 0 },
 		{ 0, 0, farClip / (farClip - nearClip), 1 },

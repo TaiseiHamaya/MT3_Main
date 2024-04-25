@@ -19,16 +19,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	DeviceData::Initialize(1280, 720);
 	Camera3D::Initialize();
+	Camera3D::SetPerspectiveFovInfomation(0.63f, 1.33f, 0.1f, 1000.0f);
+	Camera3D::SetNDCInfomation(-160.f, 160.f, 200.0f, 300.0f, 0.0f, 1000.0f);
+	Camera3D::SetViewportInformation({ 100.0f, 200.0f }, { 600.0f, 300.0f }, 0.0f, 1.0f);
+	Camera3D::CameraUpdate();
 
 	// --------------------------------------------変数宣言--------------------------------------------
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
-
-	Vector3 scale{ 1.2f, 0.79f, -2.1f };
-	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
-	Vector3 translate{ 2.7f, -4.15f, 1.57f };
-
-	Matrix4x4 worldMatrix = Transform3D::MakeAffineMatrix(scale, rotate, translate);
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -53,7 +51,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
 
-		Debug::PrintMatrix4x4(0, 0, worldMatrix);
+		Debug::PrintMatrix4x4(0, 0, Camera3D::GetOrthoMatrix());
+		Debug::PrintMatrix4x4(0, 100, Camera3D::GetPerspectiveFovMatrix());
+		Debug::PrintMatrix4x4(0, 200, Camera3D::GetViewPortMatrix());
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
