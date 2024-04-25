@@ -7,6 +7,7 @@
 #include <Vector3D.h>
 #include <Matrix.h>
 #include <Debug.h>
+#include <Transform3D.h>
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
 
@@ -23,12 +24,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
+	Vector3 scale{ 1.2f, 0.79f, -2.1f };
 	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
-	Matrix4x4 rotateXMatrix = Quaternion{ rotate.x, 0,0, }.to_matrix();
-	Matrix4x4 rotateYMatrix = Quaternion{ 0, rotate.y,0, }.to_matrix();
-	Matrix4x4 rotateZMatrix = Quaternion{ 0, 0,rotate.z, }.to_matrix();
+	Vector3 translate{ 2.7f, -4.15f, 1.57f };
 
-	Matrix4x4 rotateXYZMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
+	Matrix4x4 worldMatrix = Transform3D::MakeAffineMatrix(scale, rotate, translate);
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -53,10 +53,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
 
-		Debug::PrintMatrix4x4(0, 0, rotateXMatrix);
-		Debug::PrintMatrix4x4(0, 100, rotateYMatrix);
-		Debug::PrintMatrix4x4(0, 200, rotateZMatrix);
-		Debug::PrintMatrix4x4(0, 300, rotateXYZMatrix);
+		Debug::PrintMatrix4x4(0, 0, worldMatrix);
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
