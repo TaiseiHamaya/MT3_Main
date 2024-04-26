@@ -80,7 +80,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
 
-		//Debug::Grid3D();
 		if (Vector3::DotProduct(transform->get_translate() - Camera3D::GetCameraTransform().get_translate(), Vector3::CrossProduct(worldTriangle[1] - worldTriangle[0], worldTriangle[2] - worldTriangle[1])) <= 0) {
 			Novice::DrawTriangle(
 				int(screenTriangle[0].x), int(screenTriangle[0].y),
