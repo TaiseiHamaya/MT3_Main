@@ -30,7 +30,7 @@ public:
 	/// <summary>
 	/// オイラー角からクォータニオンを生成(ラジアン)
 	/// </summary>
-	/// <param name="pitch">X軸回転<	/param>
+	/// <param name="pitch">X軸回転</param>
 	/// <param name="yaw">Y軸回転</param>
 	/// <param name="roll">Z軸回転</param>
 	Quaternion(float pitch, float yaw, float roll);

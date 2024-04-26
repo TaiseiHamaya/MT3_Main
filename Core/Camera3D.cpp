@@ -9,11 +9,12 @@ std::unique_ptr<Camera3D> Camera3D::instance;
 
 void Camera3D::Initialize() {
 	instance.reset(new Camera3D{});
-	instance->camera = Transform3D{ Vec3::kBasis, Quaternion{ Vec3::kBasisX, -0.6f }, { 0, 2000, -3000 } };
+	instance->camera = Transform3D{ Vec3::kBasis, Quaternion{ Vec3::kBasisX, -0.0f }, { 0, 0, -5 } };
 	instance->SetNDCInfomation(-160, 200, 300, 160, 0, 1000);
 	instance->SetPerspectiveFovInfomation(0.45f, DeviceData::GetWindowSize().x / DeviceData::GetWindowSize().y, 0.1f, 1000);
 	instance->SetViewportInformation({ 0, 0 }, DeviceData::GetWindowSize(), 0, 1);
 	instance->InstanceCameraUpdate();
+	instance->cameraDirection = Transform3D::HomogeneousVector(Vec3::kBasisZ, instance->camera.get_matrix());
 }
 
 void Camera3D::SetCameraPos(const Vector3& pos) {
@@ -71,6 +72,10 @@ const Matrix4x4& Camera3D::GetVPOVMatrix() {
 	return instance->vpovMatrix;
 }
 
+const Vector3& Camera3D::GetCameraDirection() {
+	return instance->cameraDirection;
+}
+
 const Transform3D& Camera3D::GetCameraTransform() {
 	return instance->camera;
 }
@@ -82,11 +87,12 @@ void Camera3D::InstanceCameraUpdate() {
 	MakeOrthoMatrix();
 	MakeViewportMatrix();
 	vpovMatrix = viewMatrix * perspectiveFovMatrix * viewportMatrix;
+	cameraDirection = Transform3D::HomogeneousVector(Vec3::kBasisZ, camera.get_matrix());
 }
 
 void Camera3D::_DebugGUI() {
-	ImGui::SetNextWindowSize(ImVec2{ 300,215 }, ImGuiCond_Once);
-	ImGui::SetNextWindowPos(ImVec2{ 900, 100 }, ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2{ 300,125 }, ImGuiCond_Once);
+	ImGui::SetNextWindowPos(ImVec2{ 100, 100 }, ImGuiCond_Once);
 	ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoSavedSettings);
 	camera.debug_gui();
 	ImGui::End();

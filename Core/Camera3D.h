@@ -53,6 +53,8 @@ public:
 	static const Matrix4x4& GetViewPortMatrix();
 	static const Matrix4x4& GetVPOVMatrix();
 
+	static const Vector3& GetCameraDirection();
+
 public:
 	static const Transform3D& GetCameraTransform();
 
@@ -76,6 +78,7 @@ private:
 	Matrix4x4 vpovMatrix;
 
 	Transform3D camera;
+	Vector3 cameraDirection;
 
 	float fovY;
 	float aspectRatio;
