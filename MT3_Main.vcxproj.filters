@@ -95,6 +95,9 @@
     <ClCompile Include="Math\Vector3D.cpp">
       <Filter>Library\Math</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Sphere.cpp">
+      <Filter>Library\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\KamataEngine\DirectXGame\audio\Audio.h">
@@ -215,6 +218,9 @@
     </ClInclude>
     <ClInclude Include="Math\Vector3D.h">
       <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Sphere.h">
+      <Filter>Library\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

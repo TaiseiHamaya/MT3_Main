@@ -9,7 +9,7 @@ std::unique_ptr<Camera3D> Camera3D::instance;
 
 void Camera3D::Initialize() {
 	instance.reset(new Camera3D{});
-	instance->camera = Transform3D{ Vec3::kBasis, Quaternion{ Vec3::kBasisX, -0.0f }, { 0, 0, -5 } };
+	instance->camera = Transform3D{ Vec3::kBasis, Quaternion{ 0.26f,0,0 }, { 0, 1.9f, -6.49f } };
 	instance->SetNDCInfomation(-160, 200, 300, 160, 0, 1000);
 	instance->SetPerspectiveFovInfomation(0.45f, DeviceData::GetWindowSize().x / DeviceData::GetWindowSize().y, 0.1f, 1000);
 	instance->SetViewportInformation({ 0, 0 }, DeviceData::GetWindowSize(), 0, 1);

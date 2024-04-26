@@ -46,7 +46,7 @@ void Debug::Grid2D() {
 }
 
 void Debug::Grid3D() {
-	static constexpr float gridDistance = 100;
+	static constexpr float gridDistance = 1;
 	static constexpr float gridTimes = 10;
 	static constexpr float gridHalfLength = gridDistance * gridTimes;
 
@@ -63,7 +63,7 @@ void Debug::Grid3D() {
 
 	Vector3 terget = (cameraPos + (cameraRay * t));
 
-	Vector3 mid = terget / 100;
+	Vector3 mid = terget / gridDistance;
 	std::modf(mid.x, &mid.x);
 	mid.y = 0;
 	std::modf(mid.z, &mid.z);

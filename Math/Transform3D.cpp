@@ -150,7 +150,7 @@ void Transform3D::debug_gui() {
 		rotate *= Quaternion{ cood, cood.length() };
 		isNeedUpdate = true;
 	}
-	if (ImGui::DragFloat3("Translate", &translate.x, 1)) {
+	if (ImGui::DragFloat3("Translate", &translate.x, 0.1f)) {
 		isNeedUpdate = true;
 	}
 #endif // _DEBUG

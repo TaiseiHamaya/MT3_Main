@@ -120,6 +120,7 @@ xcopy C:\KamataEngine\DirectXGame\Resources "$(OutDirFullPath)NoviceResources" /
     <ClCompile Include="Core\DeviceData.cpp" />
     <ClCompile Include="Core\GameInput.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
+    <ClCompile Include="Core\Sphere.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\Array2D.cpp" />
     <ClCompile Include="Math\Color.cpp" />
@@ -166,6 +167,7 @@ xcopy C:\KamataEngine\DirectXGame\Resources "$(OutDirFullPath)NoviceResources" /
     <ClInclude Include="Core\DeviceData.h" />
     <ClInclude Include="Core\GameInput.h" />
     <ClInclude Include="Core\Renderer.h" />
+    <ClInclude Include="Core\Sphere.h" />
     <ClInclude Include="Math\Array2D.h" />
     <ClInclude Include="Math\Color.h" />
     <ClInclude Include="Math\Definition.h" />
