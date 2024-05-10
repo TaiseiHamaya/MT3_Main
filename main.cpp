@@ -43,7 +43,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		sphere.begin();
-		ImGui::SetNextWindowSize(ImVec2{ 300,170 }, ImGuiCond_Once);
+		ImGui::SetNextWindowSize(ImVec2{ 300,185 }, ImGuiCond_Once);
 		ImGui::SetNextWindowPos(ImVec2{ 900, 100 }, ImGuiCond_Once);
 		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
 		sphere.debug_gui();

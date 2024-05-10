@@ -29,7 +29,7 @@ Quaternion::Quaternion(float x, float y, float z, float w) :
 	w(w) {
 }
 
-Quaternion::Quaternion(float pitch, float yaw, float roll) {
+Quaternion::Quaternion(float pitch, float yaw, float roll) noexcept {
 	float cos_pitch = std::cos(pitch / 2);
 	float cos_yaw = std::cos(yaw / 2);
 	float cos_roll = std::cos(roll / 2);
@@ -44,7 +44,7 @@ Quaternion::Quaternion(float pitch, float yaw, float roll) {
 	w = cos_pitch * cos_yaw * cos_roll + sin_pitch * sin_yaw * sin_roll;
 }
 
-Quaternion::Quaternion(const Vector3& rotate) : Quaternion{ rotate.x, rotate.y, rotate.z } {
+Quaternion::Quaternion(const Vector3& rotate) noexcept : Quaternion{ rotate.x, rotate.y, rotate.z } {
 }
 
 Quaternion& Quaternion::operator=(const Quaternion& rhs) noexcept {

@@ -61,9 +61,9 @@ void Debug::Grid3D() {
 		return;
 	}
 
-	Vector3 terget = (cameraPos + (cameraRay * t));
+	Vector3 target = (cameraPos + (cameraRay * t));
 
-	Vector3 mid = terget / gridDistance;
+	Vector3 mid = target / gridDistance;
 	std::modf(mid.x, &mid.x);
 	mid.y = 0;
 	std::modf(mid.z, &mid.z);
@@ -84,8 +84,8 @@ void Debug::Grid3D() {
 	Vector3 zeroLeft = Transform3D::Homogeneous(Vector3{ mid.x + gridHalfLength, 0, 0 }, Camera3D::GetVPOVMatrix());
 	Vector3 zeroRight = Transform3D::Homogeneous(Vector3{ mid.x - gridHalfLength, 0, 0 }, Camera3D::GetVPOVMatrix());
 
-	Renderer::DrawLine(zeroBottom, zeroTop, RED);
-	Renderer::DrawLine(zeroLeft, zeroRight, BLUE);
+	Renderer::DrawLine(zeroLeft, zeroRight, RED);
+	Renderer::DrawLine(zeroBottom, zeroTop, GREEN);
 }
 
 void Debug::PrintVec2(int x, int y, const Vector2& vec) {

@@ -33,13 +33,13 @@ public:
 	/// <param name="pitch">X軸回転</param>
 	/// <param name="yaw">Y軸回転</param>
 	/// <param name="roll">Z軸回転</param>
-	Quaternion(float pitch, float yaw, float roll);
+	Quaternion(float pitch, float yaw, float roll) noexcept;
 
 	/// <summary>
 	/// オイラー角からクォータニオンを生成(ラジアン)
 	/// </summary>
 	/// <param name="rotate">XYZ軸回転</param>
-	Quaternion(const Vector3& rotate);
+	Quaternion(const Vector3& rotate) noexcept;
 
 public:
 	Quaternion& operator=(const Quaternion& rhs) noexcept;

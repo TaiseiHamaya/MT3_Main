@@ -91,7 +91,7 @@ void Camera3D::InstanceCameraUpdate() {
 }
 
 void Camera3D::_DebugGUI() {
-	ImGui::SetNextWindowSize(ImVec2{ 300,125 }, ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2{ 300,150 }, ImGuiCond_Once);
 	ImGui::SetNextWindowPos(ImVec2{ 100, 100 }, ImGuiCond_Once);
 	ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoSavedSettings);
 	camera.debug_gui();

@@ -137,6 +137,20 @@ bool Transform3D::need_update_matrix() const {
 
 void Transform3D::debug_gui() {
 #ifdef _DEBUG
+	if (ImGui::Button("ResetScale")) {
+		scale = Vec3::kBasis;
+		isNeedUpdate = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("ResetRotate")) {
+		rotate = Quaternion{};
+		isNeedUpdate = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("ResetTranslate")) {
+		translate = Vec3::kZero;
+		isNeedUpdate = true;
+	}
 	if (ImGui::DragFloat3("Scale", &scale.x, 0.01f)) {
 		isNeedUpdate = true;
 	}
