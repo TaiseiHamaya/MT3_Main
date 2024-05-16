@@ -9,8 +9,9 @@
 #include <format>
 #endif // _DEBUG
 
-Sphere::Sphere(const Transform3D& transform_, float radius_, uint32_t split_) {
+Sphere::Sphere(const Transform3D& transform_, const Color& color_, float radius_, uint32_t split_) {
 	transform = transform_;
+	color = color_;
 	radius = radius_;
 	split = split_;
 	float latAngle = PI / split; // 緯度(-PI/2-PI/2)
@@ -46,9 +47,10 @@ void Sphere::begin_rendering() {
 }
 
 void Sphere::draw() const {
+	unsigned int c = color.hex();
 	for (int i = 0; i < vertexes.size(); ++i) {
-		Renderer::DrawLine(screenVertexes[i][0], screenVertexes[i][1], WHITE);
-		Renderer::DrawLine(screenVertexes[i][0], screenVertexes[i][2], WHITE);
+		Renderer::DrawLine(screenVertexes[i][0], screenVertexes[i][1], c);
+		Renderer::DrawLine(screenVertexes[i][0], screenVertexes[i][2], c);
 	}
 }
 
@@ -61,5 +63,6 @@ void Sphere::debug_gui() {
 	ImGui::Text(std::format("Radius : {:f}", radius).c_str());
 	ImGui::Text(std::format("Split : {:}", split).c_str());
 	transform.debug_gui();
+	color.debug_gui();
 }
 #endif // _DEBUG

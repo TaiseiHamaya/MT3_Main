@@ -163,6 +163,8 @@ public:
 	/// <param name="vector">変化させるベクトル</param>
 	/// <returns></returns>
 	static Vector3 Abs(const Vector3& vector);
+
+	static Vector3 Projection(const Vector3& vec1,const Vector3& vec2);
 };
 
 // ------------------インライン関数定義------------------

@@ -2,12 +2,13 @@
 
 #include "Transform3D.h"
 #include "Vector3D.h"
+#include "Color.h"
 #include <vector>
 
 class Sphere {
 public:
 	Sphere() = default;
-	Sphere(const Transform3D& transform, float radius_, uint32_t split_);
+	Sphere(const Transform3D& transform, const Color& color_, float radius_, uint32_t split_);
 	~Sphere() = default;
 
 public:
@@ -21,8 +22,13 @@ public:
 	void debug_gui();
 #endif // _DEBUG
 
+public:
+	Transform3D& get_transform() { return transform; }
+	const Transform3D& get_transform() const { return transform; }
+
 private:
 	Transform3D transform;
+	Color color;
 	float radius;
 	uint32_t split;
 	std::vector<std::array<Vector3, 3>> vertexes;

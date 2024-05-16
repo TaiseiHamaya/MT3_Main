@@ -76,3 +76,8 @@ Vector3 Vector3::Bezier(const Vector3& initial, const Vector3& control, const Ve
 Vector3 Vector3::Abs(const Vector3& vector) {
 	return { std::abs(vector.x), std::abs(vector.y), std::abs(vector.z) };
 }
+
+Vector3 Vector3::Projection(const Vector3& vector1, const Vector3& vector2) {
+	Vector3 norm = vector2.normalize();
+	return norm * Vector3::DotProduct(norm, vector1);
+}

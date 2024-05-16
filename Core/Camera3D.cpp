@@ -5,6 +5,8 @@
 #include <DeviceData.h>
 #include <imgui.h>
 
+#include "Debug.h"
+
 std::unique_ptr<Camera3D> Camera3D::instance;
 
 void Camera3D::Initialize() {
@@ -92,7 +94,7 @@ void Camera3D::InstanceCameraUpdate() {
 
 void Camera3D::_DebugGUI() {
 	ImGui::SetNextWindowSize(ImVec2{ 300,150 }, ImGuiCond_Once);
-	ImGui::SetNextWindowPos(ImVec2{ 100, 100 }, ImGuiCond_Once);
+	ImGui::SetNextWindowPos(ImVec2{ 50, 50 }, ImGuiCond_Once);
 	ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoSavedSettings);
 	camera.debug_gui();
 	ImGui::End();

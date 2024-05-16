@@ -62,8 +62,8 @@
     <ClCompile Include="Core\Renderer.cpp">
       <Filter>Library\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Math\Array2D.cpp">
-      <Filter>Library\Math</Filter>
+    <ClCompile Include="Core\Sphere.cpp">
+      <Filter>Library\Core</Filter>
     </ClCompile>
     <ClCompile Include="Math\Color.cpp">
       <Filter>Library\Math</Filter>
@@ -94,9 +94,6 @@
     </ClCompile>
     <ClCompile Include="Math\Vector3D.cpp">
       <Filter>Library\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Sphere.cpp">
-      <Filter>Library\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +183,9 @@
     <ClInclude Include="Core\Renderer.h">
       <Filter>Library\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Sphere.h">
+      <Filter>Library\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Math\Array2D.h">
       <Filter>Library\Math</Filter>
     </ClInclude>
@@ -218,9 +218,6 @@
     </ClInclude>
     <ClInclude Include="Math\Vector3D.h">
       <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Sphere.h">
-      <Filter>Library\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
