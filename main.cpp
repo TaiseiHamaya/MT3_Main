@@ -16,18 +16,9 @@
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
 
-struct Segment {
-public:
-	Vector3 origin;
-	Vector3 diff;
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	return (s1.get_transform().get_translate() - s2.get_transform().get_translate()).length() <= s1.get_radius() + s2.get_radius();
 };
-
-static Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
-	float segmentLength = segment.diff.length();
-	float t = Vector3::DotProduct(point - segment.origin, segment.diff) / (segmentLength * segmentLength);
-	t = std::clamp(t, 0.f, 1.0f);
-	return segment.diff * t + segment.origin;
-}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -43,9 +34,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Sphere point{ Transform3D{ Vec3::kBasis, Vec3::kZero, {-1.5f, 0.6f, 0.6f }}, Color{ 1.0f, 0.0f, 0.0f, 1.0f }, 0.01f, 16 };
-	Sphere closestPoint{ Transform3D{ Vec3::kBasis, Vec3::kZero, Vec3::kZero }, Color{ 0.0f, 0.0f, 0.0f, 1.0f }, 0.01f, 16 };
-	Segment segment{ { -2.0f, -1.0f, 0.0f },{ 3.0f, 2.0f, 2.0f } };
+	Sphere sphere1{ Transform3D{ Vec3::kBasis, Vec3::kZero, {-1.5f, 0.6f, 0.6f }}, Color{ 1.0f, 1.0f, 1.0f, 1.0f }, 1.f, 16 };
+	Sphere sphere2{ Transform3D{ Vec3::kBasis, Vec3::kZero, Vec3::kZero }, Color{ 1.0f, 1.0f, 1.0f, 1.0f }, 1.f, 16 };
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -60,31 +50,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		// 点
-		point.begin();
+		// s1
+		sphere1.begin();
 		ImGui::SetNextWindowSize(ImVec2{ 300,210 }, ImGuiCond_Once);
 		ImGui::SetNextWindowPos(ImVec2{ 900, 100 }, ImGuiCond_Once);
-		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		point.debug_gui();
+		ImGui::Begin("Sphere1", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		sphere1.debug_gui();
 		ImGui::End();
-		point.update();
-		point.begin_rendering();
+		sphere1.update();
+		sphere1.begin_rendering();
 
-		// 線分
-		ImGui::SetNextWindowSize(ImVec2{ 300,185 }, ImGuiCond_Once);
+		// s2
+		sphere2.begin();
+		ImGui::SetNextWindowSize(ImVec2{ 300,210 }, ImGuiCond_Once);
 		ImGui::SetNextWindowPos(ImVec2{ 900, 350 }, ImGuiCond_Once);
-		ImGui::Begin("Segment", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		ImGui::DragFloat3("Origin", &segment.origin.x, 0.1f);
-		ImGui::DragFloat3("Diff", &segment.diff.x, 0.1f);
+		ImGui::Begin("Sphere2", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		sphere2.debug_gui();
 		ImGui::End();
+		sphere2.update();
+		sphere2.begin_rendering();
 
-		// 交点
-		closestPoint.begin();
-		closestPoint.get_transform().set_translate(
-			ClosestPoint(point.get_transform().get_translate(), segment)
-		);
-		closestPoint.update();
-		closestPoint.begin_rendering();
+		if (IsCollision(sphere1, sphere2)) {
+			sphere1.set_color({ 1.0f,0.0f,0.0f,1.0f });
+			sphere2.set_color({ 1.0f,0.0f,0.0f,1.0f });
+		}
+		else {
+			sphere1.set_color({ 1.0f,1.0f,1.0f,1.0f });
+			sphere2.set_color({ 1.0f,1.0f,1.0f,1.0f });
+		}
 
 		// カメラ関連
 		Camera3D::DebugGUI();
@@ -99,11 +92,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		Debug::Grid3D();
-		point.draw();
-		closestPoint.draw();
-		Vector3 start = Transform3D::Homogeneous(segment.origin, Camera3D::GetVPOVMatrix());
-		Vector3 end = Transform3D::Homogeneous(segment.origin + segment.diff, Camera3D::GetVPOVMatrix());
-		Renderer::DrawLine(start, end, WHITE);
+		sphere1.draw();
+		sphere2.draw();
+
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------

@@ -14,19 +14,7 @@ Sphere::Sphere(const Transform3D& transform_, const Color& color_, float radius_
 	color = color_;
 	radius = radius_;
 	split = split_;
-	float latAngle = PI / split; // 緯度(-PI/2-PI/2)
-	float lonAngle = PI2 / split; // 経度(0-PI2)
-	for (uint32_t latIndex = 0; latIndex < split; ++latIndex) {
-		float lat = Lerp(-PI / 2, PI / 2, float(latIndex) / split);
-		for (uint32_t lonIndex = 0; lonIndex < split; ++lonIndex) {
-			float lon = Lerp(0.0f, PI2, float(lonIndex) / split);
-			vertexes.push_back({});
-			vertexes.back()[0] = Vector3{ std::cos(lat) * std::cos(lon), std::sin(lat), std::cos(lat) * std::sin(lon) } * radius;
-			vertexes.back()[1] = Vector3{ std::cos(lat + latAngle) * std::cos(lon), std::sin(lat + latAngle), std::cos(lat + latAngle) * std::sin(lon) }*radius;
-			vertexes.back()[2] = Vector3{ std::cos(lat) * std::cos(lon + lonAngle), std::sin(lat), std::cos(lat) * std::sin(lon + lonAngle) }*radius;
-		}
-	}
-	screenVertexes.resize(vertexes.size());
+	create_vertexes();
 }
 
 void Sphere::begin() {
@@ -60,9 +48,42 @@ void Sphere::debug() const {
 }
 
 void Sphere::debug_gui() {
-	ImGui::Text(std::format("Radius : {:f}", radius).c_str());
 	ImGui::Text(std::format("Split : {:}", split).c_str());
+	if (ImGui::DragFloat("Radius", &radius, 0.01f, 0.0f, 1000000.0f, "%.5f")) {
+		create_vertexes();
+	}
 	transform.debug_gui();
 	color.debug_gui();
 }
 #endif // _DEBUG
+
+void Sphere::create_vertexes() {
+	vertexes.clear();
+	screenVertexes.clear();
+	float latAngle = PI / split; // 緯度(-PI/2-PI/2)
+	float lonAngle = PI2 / split; // 経度(0-PI2)
+	for (uint32_t latIndex = 0; latIndex < split; ++latIndex) {
+		float lat = Lerp(-PI / 2, PI / 2, float(latIndex) / split);
+		for (uint32_t lonIndex = 0; lonIndex < split; ++lonIndex) {
+			float lon = Lerp(0.0f, PI2, float(lonIndex) / split);
+			vertexes.push_back({});
+			vertexes.back()[0] = Vector3{ std::cos(lat) * std::cos(lon), std::sin(lat), std::cos(lat) * std::sin(lon) } *radius;
+			vertexes.back()[1] = Vector3{ std::cos(lat + latAngle) * std::cos(lon), std::sin(lat + latAngle), std::cos(lat + latAngle) * std::sin(lon) }*radius;
+			vertexes.back()[2] = Vector3{ std::cos(lat) * std::cos(lon + lonAngle), std::sin(lat), std::cos(lat) * std::sin(lon + lonAngle) }*radius;
+		}
+	}
+	screenVertexes.resize(vertexes.size());
+}
+
+void Sphere::set_radius(float radius_) {
+	radius = radius_;
+	create_vertexes();
+}
+
+float Sphere::get_radius() const {
+	return radius;
+}
+
+void Sphere::set_color(const Color& color_) {
+	color = color_;
+}

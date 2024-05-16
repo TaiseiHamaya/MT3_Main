@@ -22,9 +22,15 @@ public:
 	void debug_gui();
 #endif // _DEBUG
 
+private:
+	void create_vertexes();
+
 public:
+	void set_radius(float radius_);
+	float get_radius() const;
 	Transform3D& get_transform() { return transform; }
 	const Transform3D& get_transform() const { return transform; }
+	void set_color(const Color& color);
 
 private:
 	Transform3D transform;
