@@ -27,6 +27,10 @@ public:
 	Vector3 diff; // 向き
 };
 
+struct Triangle {
+	std::array<Vector3, 3> vertices;
+};
+
 bool IsCollision(const Plane& plane, const Segment& segment) {
 	float dot = Vector3::DotProduct(plane.normal, segment.diff);
 
@@ -36,6 +40,32 @@ bool IsCollision(const Plane& plane, const Segment& segment) {
 	float t = (plane.distance - Vector3::DotProduct(plane.normal, segment.origin)) / dot;
 
 	return t >= 0 && t <= 1;
+}
+
+bool IsCollision(const Triangle& triangle, const Segment& segment) {
+	Plane trianglePlane;
+	trianglePlane.normal = Vector3::CrossProduct(triangle.vertices[1] - triangle.vertices[0], triangle.vertices[2] - triangle.vertices[1]).normalize();
+	trianglePlane.distance = Vector3::DotProduct(triangle.vertices[0], trianglePlane.normal);
+
+	if (!IsCollision(trianglePlane, segment)) {
+		return false;
+	}
+	float dot = Vector3::DotProduct(trianglePlane.normal, segment.diff);
+	float t = (trianglePlane.distance - Vector3::DotProduct(trianglePlane.normal, segment.origin)) / dot;
+	Vector3 collisionPoint = segment.origin + segment.diff * t;
+
+	Vector3 cross1 = Vector3::CrossProduct(triangle.vertices[1] - triangle.vertices[0], collisionPoint - triangle.vertices[1]);
+	Vector3 cross2 = Vector3::CrossProduct(triangle.vertices[2] - triangle.vertices[1], collisionPoint - triangle.vertices[2]);
+	Vector3 cross3 = Vector3::CrossProduct(triangle.vertices[0] - triangle.vertices[2], collisionPoint - triangle.vertices[0]);
+
+	if (
+		Vector3::DotProduct(trianglePlane.normal, cross1) >= 0 &&
+		Vector3::DotProduct(trianglePlane.normal, cross2) >= 0 &&
+		Vector3::DotProduct(trianglePlane.normal, cross3) >= 0
+		) {
+		return true;
+	}
+	return false;
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -53,8 +83,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char preKeys[256] = { 0 };
 
 	Segment segment{ { -2.0f, -1.0f, 0.0f },{ 3.0f, 2.0f, 2.0f } };
-	Plane plane{ Vec3::kBasisY, 1.0f };
 	Color segmentColor = { 1.0f,1.0f,1.0f,1.0f };
+	Triangle triangel = {
+		{Vec3::kBasisX,Vec3::kBasisY,Vec3::kBasisZ }
+	};
+
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -78,26 +111,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 
-		// plane
+		// triangle
 		ImGui::SetNextWindowSize(ImVec2{ 300,210 }, ImGuiCond_Once);
 		ImGui::SetNextWindowPos(ImVec2{ 900, 350 }, ImGuiCond_Once);
-		ImGui::Begin("Sphere2", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		if (ImGui::DragFloat3("DirectionRotateV1", &plane.normal.x, 0.01f)) {
-			plane.normal = plane.normal.normalize();
-		}
-		Vector3 rotate = Vec3::kZero;
-		if (ImGui::DragFloat3("DirectionRotateV2", &rotate.x, 0.02f)) {
-			plane.normal = Transform3D::Homogeneous(plane.normal, Quaternion{ rotate }.to_matrix());
-			plane.normal = plane.normal.normalize();
-		}
-		if (ImGui::Button("ResetNormal")) {
-			plane.normal = Vec3::kBasisY;
-		}
-		ImGui::Text("%.3f, %.3f, %.3f", plane.normal.x, plane.normal.y, plane.normal.z);
-		ImGui::DragFloat("Distance", &plane.distance, 0.1f);
+		ImGui::Begin("Triangel", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		ImGui::DragFloat3("Position0", &triangel.vertices[0].x, 0.1f);
+		ImGui::DragFloat3("Position1", &triangel.vertices[1].x, 0.1f);
+		ImGui::DragFloat3("Position2", &triangel.vertices[2].x, 0.1f);
 		ImGui::End();
 
-		if (IsCollision(plane, segment)) {
+		if (IsCollision(triangel, segment)) {
 			segmentColor = { 1.0f,0.0f,0.0f,1.0f };
 		}
 		else {
@@ -121,29 +144,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Vector3 start = Transform3D::Homogeneous(segment.origin, Camera3D::GetVPOVMatrix());
 		Vector3 end = Transform3D::Homogeneous(segment.origin + segment.diff, Camera3D::GetVPOVMatrix());
 		Renderer::DrawLine(start, end, color);
-		{
-			Vector3 center = plane.normal * plane.distance;
-			std::array<Vector3, 4> planeVertexes;
-			planeVertexes[0] =
-				plane.normal.x != 0 || plane.normal.y != 0
-				? Vector3{ -plane.normal.y, plane.normal.x, 0.0f } : Vector3{ 0.0f, -plane.normal.z, plane.normal.y };
-			planeVertexes[0] = planeVertexes[0].normalize() * 10;
-			planeVertexes[2] = -planeVertexes[0];
-			planeVertexes[1] = Vector3::CrossProduct(planeVertexes[0], plane.normal);
-			planeVertexes[3] = -planeVertexes[1];
 
-
-			std::array<Vector3, 4> planeScreenVertexes;
-
-			for (int i = 0; i < planeVertexes.size(); ++i) {
-				planeScreenVertexes[i] = Transform3D::Homogeneous(planeVertexes[i] + center, Camera3D::GetVPOVMatrix());
+		{ // draw triangle
+			Triangle screenTriangle;
+			for (int i = 0; i < screenTriangle.vertices.size(); ++i) {
+				screenTriangle.vertices[i] = Transform3D::Homogeneous(triangel.vertices[i], Camera3D::GetVPOVMatrix());
 			}
-
-			Renderer::DrawLine(planeScreenVertexes[0], planeScreenVertexes[1], color);
-			Renderer::DrawLine(planeScreenVertexes[1], planeScreenVertexes[2], color);
-			Renderer::DrawLine(planeScreenVertexes[2], planeScreenVertexes[3], color);
-			Renderer::DrawLine(planeScreenVertexes[3], planeScreenVertexes[0], color);
-
+			Renderer::DrawLine(screenTriangle.vertices[0], screenTriangle.vertices[1], color);
+			Renderer::DrawLine(screenTriangle.vertices[1], screenTriangle.vertices[2], color);
+			Renderer::DrawLine(screenTriangle.vertices[2], screenTriangle.vertices[0], color);
 		}
 
 		///
