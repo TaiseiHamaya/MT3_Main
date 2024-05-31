@@ -45,12 +45,9 @@ void DrawAABB(const AABB& aabb, unsigned int color) {
 	Renderer::DrawLine(screenPos[3], screenPos[7], color);
 }
 
-bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
-	if (
-		aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x &&
-		aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y &&
-		aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z
-		) {
+bool IsCollision(const AABB& aabb, const Sphere& sphere) {
+	Vector3 closest = Vector3::Clamp(sphere.get_transform().get_translate(), aabb.min, aabb.max);
+	if ((closest - sphere.get_transform().get_translate()).length() <= sphere.get_radius()) {
 		return true;
 	}
 	return false;
@@ -73,19 +70,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char preKeys[256] = { 0 };
 
 	Color color = { 1.0f,1.0f,1.0f,1.0f };
-	AABB box1{
+	AABB box{
 		{0,0,0},
 		{1,1,1}
 	};
-	AABB box1World{};
+	AABB boxWorld{};
 	Vector3 translate1{ Vec3::kZero };
 
-	AABB box2{
-		{0,0,0},
-		{1,1,1}
-	};
-	AABB box2World{};
-	Vector3 translate2{ Vec3::kZero };
+	Sphere sphere{ {},{},2,16 };
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -100,42 +92,36 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		ImGui::Begin("Box1", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		ImGui::DragFloat3("Min", &box1.min.x, 0.1f);
-		ImGui::DragFloat3("Max", &box1.max.x, 0.1f);
+		ImGui::Begin("Box", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		ImGui::DragFloat3("Min", &box.min.x, 0.1f);
+		ImGui::DragFloat3("Max", &box.max.x, 0.1f);
 		ImGui::DragFloat3("Translate", &translate1.x, 0.1f);
 		{
-			auto boxResultX = std::minmax(box1.min.x, box1.max.x);
-			auto boxResultY = std::minmax(box1.min.y, box1.max.y);
-			auto boxResultZ = std::minmax(box1.min.z, box1.max.z);
-			box1.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
-			box1.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
+			auto boxResultX = std::minmax(box.min.x, box.max.x);
+			auto boxResultY = std::minmax(box.min.y, box.max.y);
+			auto boxResultZ = std::minmax(box.min.z, box.max.z);
+			box.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
+			box.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
 		}
 		ImGui::End();
 
-		ImGui::Begin("Box2", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		ImGui::DragFloat3("Min", &box2.min.x, 0.1f);
-		ImGui::DragFloat3("Max", &box2.max.x, 0.1f);
-		ImGui::DragFloat3("Translate", &translate2.x, 0.1f);
-		{
-			auto boxResultX = std::minmax(box2.min.x, box2.max.x);
-			auto boxResultY = std::minmax(box2.min.y, box2.max.y);
-			auto boxResultZ = std::minmax(box2.min.z, box2.max.z);
-			box2.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
-			box2.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
-		}
+		//ImGui::SetNextWindowSize();
+		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		sphere.debug_gui();
 		ImGui::End();
+		sphere.update();
+		sphere.begin_rendering();
 
-		box1World.min = box1.min + translate1;
-		box1World.max = box1.max + translate1;
-		box2World.min = box2.min + translate2;
-		box2World.max = box2.max + translate2;
+		boxWorld.min = box.min + translate1;
+		boxWorld.max = box.max + translate1;
 
-		if (IsCollision(box1World, box2World)) {
+		if (IsCollision(boxWorld, sphere)) {
 			color = { 1.0f,0.0f,0.0f,1.0f };
+			sphere.set_color(color);
 		}
 		else {
 			color = { 1.0f,1.0f,1.0f,1.0f };
+			sphere.set_color(color);
 		}
 
 		// カメラ関連
@@ -152,8 +138,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		unsigned int hexColor = color.hex();
 		Debug::Grid3D();
-		DrawAABB(box1World, hexColor);
-		DrawAABB(box2World, hexColor);
+		DrawAABB(boxWorld, hexColor);
+		sphere.draw();
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
