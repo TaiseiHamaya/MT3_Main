@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 
 float Vector3::length() const {
 	return std::sqrt(x * x + y * y + z * z);
@@ -80,4 +81,8 @@ Vector3 Vector3::Abs(const Vector3& vector) {
 Vector3 Vector3::Projection(const Vector3& vector1, const Vector3& vector2) {
 	Vector3 norm = vector2.normalize();
 	return norm * Vector3::DotProduct(norm, vector1);
+}
+
+Vector3 Vector3::Clamp(const Vector3& vector, const Vector3& min, const Vector3& max) {
+	return { std::clamp(vector.x, min.x, max.x),std::clamp(vector.y, min.y, max.y) ,std::clamp(vector.z, min.z, max.z) };
 }
