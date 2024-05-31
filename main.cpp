@@ -92,6 +92,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
+		ImGui::SetNextWindowSize(ImVec2{ 300,100 }, ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2{ 50, 220 }, ImGuiCond_Once);
 		ImGui::Begin("Box", nullptr, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::DragFloat3("Min", &box.min.x, 0.1f);
 		ImGui::DragFloat3("Max", &box.max.x, 0.1f);
@@ -105,7 +107,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::End();
 
-		//ImGui::SetNextWindowSize();
+		ImGui::SetNextWindowSize(ImVec2{ 300,210 }, ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2{ 50, 340 }, ImGuiCond_Once);
 		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
 		sphere.debug_gui();
 		ImGui::End();
