@@ -18,6 +18,11 @@ struct AABB {
 	Vector3 max;
 };
 
+struct Segment {
+	Vector3 origin; // 原点
+	Vector3 diff; // 向き
+};
+
 void DrawAABB(const AABB& aabb, unsigned int color) {
 	std::array<Vector3, 8> screenPos;
 	screenPos[0] = Transform3D::Homogeneous(aabb.min, Camera3D::GetVPOVMatrix());
@@ -45,9 +50,25 @@ void DrawAABB(const AABB& aabb, unsigned int color) {
 	Renderer::DrawLine(screenPos[3], screenPos[7], color);
 }
 
-bool IsCollision(const AABB& aabb, const Sphere& sphere) {
-	Vector3 closest = Vector3::Clamp(sphere.get_transform().get_translate(), aabb.min, aabb.max);
-	if ((closest - sphere.get_transform().get_translate()).length() <= sphere.get_radius()) {
+bool IsCollision(const AABB& aabb, const Segment& segment) {
+	float txmin = (aabb.min.x - segment.origin.x) / segment.diff.x;
+	float txmax = (aabb.max.x - segment.origin.x) / segment.diff.x;
+	float tymin = (aabb.min.y - segment.origin.y) / segment.diff.y;
+	float tymax = (aabb.max.y - segment.origin.y) / segment.diff.y;
+	float tzmin = (aabb.min.z - segment.origin.z) / segment.diff.z;
+	float tzmax = (aabb.max.z - segment.origin.z) / segment.diff.z;
+
+	float tNearX = (std::min)(txmin, txmax);
+	float tFarX = (std::max)(txmin, txmax);
+	float tNearY = (std::min)(tymin, tymax);
+	float tFarY = (std::max)(tymin, tymax);
+	float tNearZ = (std::min)(tzmin, tzmax);
+	float tFarZ = (std::max)(tzmin, tzmax);
+
+	float tMin = (std::max)({ tNearX, tNearY, tNearZ });
+	float tMax = (std::min)({ tFarX, tFarY, tFarZ });
+
+	if (tMin <= tMax && !(tMin > 1 || tMax < 0)) {
 		return true;
 	}
 	return false;
@@ -71,13 +92,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Color color = { 1.0f,1.0f,1.0f,1.0f };
 	AABB box{
-		{0,0,0},
-		{1,1,1}
+		{-0.5f,-0.5f,-0.5f},
+		{0.5f,0.5f,0.5f}
 	};
 	AABB boxWorld{};
 	Vector3 translate1{ Vec3::kZero };
 
-	Sphere sphere{ {},{},2,16 };
+	Segment segment{ 
+		{ -0.7f, 0.3f, 0.0f },
+		{ 2.0f, -0.5f, 0.0f } 
+	};
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -107,24 +131,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::End();
 
-		ImGui::SetNextWindowSize(ImVec2{ 300,210 }, ImGuiCond_Once);
-		ImGui::SetNextWindowPos(ImVec2{ 50, 340 }, ImGuiCond_Once);
-		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		sphere.debug_gui();
+		// 線分
+		ImGui::SetNextWindowSize(ImVec2{ 300,185 }, ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2{ 900, 100 }, ImGuiCond_Once);
+		ImGui::Begin("Segment", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		ImGui::DragFloat3("Origin", &segment.origin.x, 0.1f);
+		ImGui::DragFloat3("Diff", &segment.diff.x, 0.1f);
 		ImGui::End();
-		sphere.update();
-		sphere.begin_rendering();
 
 		boxWorld.min = box.min + translate1;
 		boxWorld.max = box.max + translate1;
 
-		if (IsCollision(boxWorld, sphere)) {
+		if (IsCollision(boxWorld, segment)) {
 			color = { 1.0f,0.0f,0.0f,1.0f };
-			sphere.set_color(color);
 		}
 		else {
 			color = { 1.0f,1.0f,1.0f,1.0f };
-			sphere.set_color(color);
 		}
 
 		// カメラ関連
@@ -142,7 +164,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		unsigned int hexColor = color.hex();
 		Debug::Grid3D();
 		DrawAABB(boxWorld, hexColor);
-		sphere.draw();
+		Vector3 start = Transform3D::Homogeneous(segment.origin, Camera3D::GetVPOVMatrix());
+		Vector3 end = Transform3D::Homogeneous(segment.origin + segment.diff, Camera3D::GetVPOVMatrix());
+		Renderer::DrawLine(start, end, hexColor);
+
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
