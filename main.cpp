@@ -23,6 +23,11 @@ struct OBB {
 	Transform3D transfrom;
 };
 
+struct Segment {
+	Vector3 origin; // 原点
+	Vector3 diff; // 向き
+};
+
 void DrawOBB(const OBB& obb, unsigned int color) {
 	Matrix4x4 wvpv = obb.transfrom.get_matrix() * Camera3D::GetVPOVMatrix();
 	std::array<Vector3, 8> screenPos;
@@ -51,18 +56,38 @@ void DrawOBB(const OBB& obb, unsigned int color) {
 	Renderer::DrawLine(screenPos[3], screenPos[7], color);
 }
 
-bool IsCollision(const AABB& aabb, const Vector3& position, float radius) {
-	Vector3 closest = Vector3::Clamp(position, aabb.min, aabb.max);
-	if ((position - closest).length() <= radius) {
+bool IsCollision(const AABB& aabb, const Segment& segment) {
+	float txmin = (aabb.min.x - segment.origin.x) / segment.diff.x;
+	float txmax = (aabb.max.x - segment.origin.x) / segment.diff.x;
+	float tymin = (aabb.min.y - segment.origin.y) / segment.diff.y;
+	float tymax = (aabb.max.y - segment.origin.y) / segment.diff.y;
+	float tzmin = (aabb.min.z - segment.origin.z) / segment.diff.z;
+	float tzmax = (aabb.max.z - segment.origin.z) / segment.diff.z;
+
+	float tNearX = (std::min)(txmin, txmax);
+	float tFarX = (std::max)(txmin, txmax);
+	float tNearY = (std::min)(tymin, tymax);
+	float tFarY = (std::max)(tymin, tymax);
+	float tNearZ = (std::min)(tzmin, tzmax);
+	float tFarZ = (std::max)(tzmin, tzmax);
+
+	float tMin = (std::max)({ tNearX, tNearY, tNearZ });
+	float tMax = (std::min)({ tFarX, tFarY, tFarZ });
+
+	if (tMin <= tMax && !(tMin > 1 || tMax < 0)) {
 		return true;
 	}
 	return false;
 }
 
-bool IsCollision(const OBB& obb, const Sphere& sphere) {
-	Vector3 sphereTranslate = Transform3D::Homogeneous(sphere.get_transform().get_translate(), obb.transfrom.get_matrix().inverse());
+bool IsCollision(const OBB& obb, const Segment& segment) {
 
-	return IsCollision(obb.localVertexis, sphereTranslate, sphere.get_radius());
+	Segment obbLocalSegment = {
+		Transform3D::Homogeneous(segment.origin, obb.transfrom.get_matrix().inverse()),
+		Transform3D::HomogeneousVector(segment.diff, obb.transfrom.get_matrix().inverse())
+	};
+
+	return IsCollision(obb.localVertexis, obbLocalSegment);
 }
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
@@ -88,7 +113,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{  }
 	};
 
-	Sphere sphere{ {Vec3::kBasis,Quaternion::Identity(), {1.55f, 0,0}},{},1,16 };
+	Segment segment{
+	{ -0.7f, 0.3f, 0.0f },
+	{ 2.0f, -0.5f, 0.0f }
+	};
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -103,7 +131,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		ImGui::SetNextWindowPos({ 959, 248 }, 0);
+		ImGui::SetNextWindowPos({ 959, 125 }, 0);
 		ImGui::SetNextWindowSize({ 298, 146 }, 0);
 		ImGui::Begin("Box", nullptr, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::DragFloat3("Min", &obb.localVertexis.min.x, 0.1f);
@@ -118,8 +146,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (ImGui::DragFloat3("RotateWorld", &cood.x, 0.02f)) {
 			obb.transfrom.get_quaternion() *= Quaternion{ cood, cood.length() };
 		}
-		if (ImGui::DragFloat3("Translate", const_cast<float*>(&obb.transfrom.get_translate().x), 0.1f)) {
-		}
+		ImGui::DragFloat3("Translate", const_cast<float*>(&obb.transfrom.get_translate().x), 0.1f);
 		{
 			auto boxResultX = std::minmax(obb.localVertexis.min.x, obb.localVertexis.max.x);
 			auto boxResultY = std::minmax(obb.localVertexis.min.y, obb.localVertexis.max.y);
@@ -129,24 +156,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::End();
 
-		//ImGui::SetNextWindowSize();
+		// 線分
 		ImGui::SetNextWindowPos({ 957,24 }, 0);
-		ImGui::SetNextWindowSize({ 301,209 }, 0);
-		ImGui::Begin("Sphere", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		sphere.debug_gui();
+		ImGui::SetNextWindowSize({ 301,80 }, 0);
+		ImGui::Begin("Segment", nullptr, ImGuiWindowFlags_NoSavedSettings);
+		ImGui::DragFloat3("Origin", &segment.origin.x, 0.1f);
+		ImGui::DragFloat3("Diff", &segment.diff.x, 0.1f);
 		ImGui::End();
-		sphere.update();
-		sphere.begin_rendering();
 
 		obb.transfrom.update();
 
-		if (IsCollision(obb, sphere)) {
+		if (IsCollision(obb, segment)) {
 			color = { 1.0f,0.0f,0.0f,1.0f };
-			sphere.set_color(color);
 		}
 		else {
 			color = { 1.0f,1.0f,1.0f,1.0f };
-			sphere.set_color(color);
 		}
 
 		// カメラ関連
@@ -164,7 +188,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		unsigned int hexColor = color.hex();
 		Debug::Grid3D();
 		DrawOBB(obb, hexColor);
-		sphere.draw();
+		Vector3 start = Transform3D::Homogeneous(segment.origin, Camera3D::GetVPOVMatrix());
+		Vector3 end = Transform3D::Homogeneous(segment.origin + segment.diff, Camera3D::GetVPOVMatrix());
+		Renderer::DrawLine(start, end, hexColor);
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
