@@ -124,6 +124,10 @@ const Quaternion& Transform3D::get_quaternion() const {
 	return rotate;
 }
 
+Quaternion& Transform3D::get_quaternion() {
+	return rotate;
+}
+
 void Transform3D::plus_translate(const Vector3& plus) {
 	if (plus.length() != 0) {
 		isNeedUpdate = true;

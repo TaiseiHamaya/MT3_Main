@@ -29,6 +29,7 @@ public:
 	const Matrix4x4& get_matrix() const;
 	const Vector3& get_translate() const;
 	const Quaternion& get_quaternion() const;
+	Quaternion& get_quaternion();
 	void plus_translate(const Vector3& plus);
 
 	bool need_update_matrix() const;
