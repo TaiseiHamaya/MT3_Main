@@ -23,11 +23,6 @@ struct OBB {
 	Transform3D transfrom;
 };
 
-struct Segment {
-	Vector3 origin; // 原点
-	Vector3 diff; // 向き
-};
-
 void DrawOBB(const OBB& obb, unsigned int color) {
 	Matrix4x4 wvpv = obb.transfrom.get_matrix() * Camera3D::GetVPOVMatrix();
 	std::array<Vector3, 8> screenPos;
@@ -56,38 +51,109 @@ void DrawOBB(const OBB& obb, unsigned int color) {
 	Renderer::DrawLine(screenPos[3], screenPos[7], color);
 }
 
-bool IsCollision(const AABB& aabb, const Segment& segment) {
-	float txmin = (aabb.min.x - segment.origin.x) / segment.diff.x;
-	float txmax = (aabb.max.x - segment.origin.x) / segment.diff.x;
-	float tymin = (aabb.min.y - segment.origin.y) / segment.diff.y;
-	float tymax = (aabb.max.y - segment.origin.y) / segment.diff.y;
-	float tzmin = (aabb.min.z - segment.origin.z) / segment.diff.z;
-	float tzmax = (aabb.max.z - segment.origin.z) / segment.diff.z;
+bool SeparatingAxisCollision(const Vector3& separatingAxis, const std::vector<Vector3>& convoxVertex1, const std::vector<Vector3>& convoxVertex2) {
+	std::vector<float> projectionVertexLength1;
+	projectionVertexLength1.reserve(convoxVertex1.size());
+	for (int i = 0; i < convoxVertex1.size(); ++i) {
+		projectionVertexLength1.emplace_back(Vector3::DotProduct(convoxVertex1[i], separatingAxis) / separatingAxis.length());
+	}
 
-	float tNearX = (std::min)(txmin, txmax);
-	float tFarX = (std::max)(txmin, txmax);
-	float tNearY = (std::min)(tymin, tymax);
-	float tFarY = (std::max)(tymin, tymax);
-	float tNearZ = (std::min)(tzmin, tzmax);
-	float tFarZ = (std::max)(tzmin, tzmax);
+	std::vector<float> projectionVertexLength2;
+	projectionVertexLength2.reserve(convoxVertex2.size());
+	for (int i = 0; i < convoxVertex2.size(); ++i) {
+		projectionVertexLength2.emplace_back(Vector3::DotProduct(convoxVertex2[i], separatingAxis) / separatingAxis.length());
+	}
 
-	float tMin = (std::max)({ tNearX, tNearY, tNearZ });
-	float tMax = (std::min)({ tFarX, tFarY, tFarZ });
+	auto&& convoxMinMax1 = std::minmax_element(projectionVertexLength1.begin(), projectionVertexLength1.end());
+	auto&& convoxMinMax2 = std::minmax_element(projectionVertexLength2.begin(), projectionVertexLength2.end());
 
-	if (tMin <= tMax && !(tMin > 1 || tMax < 0)) {
+	float sumSpan = *convoxMinMax1.second - *convoxMinMax1.first + *convoxMinMax2.second - *convoxMinMax2.first;
+	float longSpan = (std::max)(*convoxMinMax1.second, *convoxMinMax2.second) - (std::min)(*convoxMinMax1.first, *convoxMinMax2.first);
+	if (sumSpan < longSpan) {
 		return true;
 	}
 	return false;
 }
 
-bool IsCollision(const OBB& obb, const Segment& segment) {
-
-	Segment obbLocalSegment = {
-		Transform3D::Homogeneous(segment.origin, obb.transfrom.get_matrix().inverse()),
-		Transform3D::HomogeneousVector(segment.diff, obb.transfrom.get_matrix().inverse())
+bool IsCollision(const OBB& obb1, const OBB& obb2) {
+	const Matrix4x4& obb1Matrix = obb1.transfrom.get_matrix();
+	// OBB頂点の取得
+	std::vector<Vector3> convoxVertex1{
+		Transform3D::Homogeneous(obb1.localVertexis.min, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.min.x,obb1.localVertexis.min.y,obb1.localVertexis.max.z}, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.min.x,obb1.localVertexis.max.y,obb1.localVertexis.max.z}, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.max.x,obb1.localVertexis.min.y,obb1.localVertexis.max.z}, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.min.x,obb1.localVertexis.max.y,obb1.localVertexis.min.z}, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.max.x,obb1.localVertexis.min.y,obb1.localVertexis.min.z}, obb1Matrix),
+		Transform3D::Homogeneous({obb1.localVertexis.max.x,obb1.localVertexis.max.y,obb1.localVertexis.min.z}, obb1Matrix),
+		Transform3D::Homogeneous(obb1.localVertexis.max, obb1Matrix)
 	};
+	const Matrix4x4& obb2Matrix = obb2.transfrom.get_matrix();
+	std::vector<Vector3> convoxVertex2{
+		Transform3D::Homogeneous(obb2.localVertexis.min, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.min.x,obb2.localVertexis.min.y,obb2.localVertexis.max.z}, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.min.x,obb2.localVertexis.max.y,obb2.localVertexis.max.z}, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.max.x,obb2.localVertexis.min.y,obb2.localVertexis.max.z}, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.min.x,obb2.localVertexis.max.y,obb2.localVertexis.min.z}, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.max.x,obb2.localVertexis.min.y,obb2.localVertexis.min.z}, obb2Matrix),
+		Transform3D::Homogeneous({obb2.localVertexis.max.x,obb2.localVertexis.max.y,obb2.localVertexis.min.z}, obb2Matrix),
+		Transform3D::Homogeneous(obb2.localVertexis.max, obb2Matrix)
+	};
+	// 面法線タイム
+	Vector3 separatingAxis1X = Transform3D::HomogeneousVector(Vec3::kBasisX, obb1.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis1X, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	Vector3 separatingAxis1Y = Transform3D::HomogeneousVector(Vec3::kBasisY, obb1.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis1Y, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	Vector3 separatingAxis1Z = Transform3D::HomogeneousVector(Vec3::kBasisZ, obb1.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis1Z, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	Vector3 separatingAxis2X = Transform3D::HomogeneousVector(Vec3::kBasisX, obb2.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis2X, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	Vector3 separatingAxis2Y = Transform3D::HomogeneousVector(Vec3::kBasisY, obb2.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis2Y, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	Vector3 separatingAxis2Z = Transform3D::HomogeneousVector(Vec3::kBasisZ, obb2.transfrom.get_matrix());
+	if (SeparatingAxisCollision(separatingAxis2Z, convoxVertex1, convoxVertex2)) {
+		return false;
+	}
 
-	return IsCollision(obb.localVertexis, obbLocalSegment);
+	// クロス積タイム
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1X, separatingAxis2X), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1X, separatingAxis2Y), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1X, separatingAxis2Z), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Y, separatingAxis2X), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Y, separatingAxis2Y), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Y, separatingAxis2Z), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Z, separatingAxis2X), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Z, separatingAxis2Y), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	if (SeparatingAxisCollision(Vector3::CrossProduct(separatingAxis1Z, separatingAxis2Z), convoxVertex1, convoxVertex2)) {
+		return false;
+	}
+	return true;
 }
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
@@ -108,14 +174,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char preKeys[256] = { 0 };
 
 	Color color = { 1.0f,1.0f,1.0f,1.0f };
-	OBB obb{
+	OBB obb1{
 		{ {-0.5f,-0.5f,-0.5f}, {0.5f,0.5f,0.5f} },
 		{  }
 	};
-
-	Segment segment{
-	{ -0.7f, 0.3f, 0.0f },
-	{ 2.0f, -0.5f, 0.0f }
+	OBB obb2{
+		{ {-0.5f,-0.5f,-0.5f}, {0.5f,0.5f,0.5f} },
+		{ Vec3::kBasis, Quaternion{-0.05f, -2.49f, 0.15f}, Vector3{0.9f,0.66f, 0.78f } }
 	};
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
@@ -131,42 +196,68 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		ImGui::SetNextWindowPos({ 959, 125 }, 0);
-		ImGui::SetNextWindowSize({ 298, 146 }, 0);
-		ImGui::Begin("Box", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		ImGui::DragFloat3("Min", &obb.localVertexis.min.x, 0.1f);
-		ImGui::DragFloat3("Max", &obb.localVertexis.max.x, 0.1f);
-		//ImGui::DragFloat3("Translate", const_cast<float*>(&obb.transfrom.get_translate().x), 0.1f);
-		//obb.transfrom.get_quaternion()
-		Vector3 quaternion = Vec3::kZero;
-		if (ImGui::DragFloat3("RotateLocal", &quaternion.x, 0.01f, -PI, PI)) {
-			obb.transfrom.get_quaternion() = Quaternion{ quaternion } *obb.transfrom.get_quaternion();
+		{	// OBB1
+			ImGui::SetNextWindowPos({ 959, 125 }, ImGuiCond_Once);
+			ImGui::SetNextWindowSize({ 298, 173 }, ImGuiCond_Once);
+			ImGui::Begin("OBB1", nullptr, ImGuiWindowFlags_NoSavedSettings);
+			ImGui::DragFloat3("Min", &obb1.localVertexis.min.x, 0.1f);
+			ImGui::DragFloat3("Max", &obb1.localVertexis.max.x, 0.1f);
+			ImGui::Separator();
+			if (ImGui::Button("ResetRotate")) {
+				obb1.transfrom.get_quaternion() = Quaternion{};
+			}
+			Vector3 quaternion = Vec3::kZero;
+			if (ImGui::DragFloat3("RotateLocal", &quaternion.x, 0.01f, -PI, PI)) {
+				obb1.transfrom.get_quaternion() = Quaternion{ quaternion } *obb1.transfrom.get_quaternion();
+			}
+			Vector3 cood = Vec3::kZero;
+			if (ImGui::DragFloat3("RotateWorld", &cood.x, 0.02f)) {
+				obb1.transfrom.get_quaternion() *= Quaternion{ cood, cood.length() };
+			}
+			ImGui::DragFloat3("Translate", const_cast<float*>(&obb1.transfrom.get_translate().x), 0.1f);
+			{
+				auto boxResultX = std::minmax(obb1.localVertexis.min.x, obb1.localVertexis.max.x);
+				auto boxResultY = std::minmax(obb1.localVertexis.min.y, obb1.localVertexis.max.y);
+				auto boxResultZ = std::minmax(obb1.localVertexis.min.z, obb1.localVertexis.max.z);
+				obb1.localVertexis.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
+				obb1.localVertexis.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
+			}
+			ImGui::End();
 		}
-		Vector3 cood = Vec3::kZero;
-		if (ImGui::DragFloat3("RotateWorld", &cood.x, 0.02f)) {
-			obb.transfrom.get_quaternion() *= Quaternion{ cood, cood.length() };
+
+		{	// OBB2
+			ImGui::SetNextWindowPos({ 959, 325 }, ImGuiCond_Once);
+			ImGui::SetNextWindowSize({ 298, 173 }, ImGuiCond_Once);
+			ImGui::Begin("OBB2", nullptr, ImGuiWindowFlags_NoSavedSettings);
+			ImGui::DragFloat3("Min", &obb2.localVertexis.min.x, 0.1f);
+			ImGui::DragFloat3("Max", &obb2.localVertexis.max.x, 0.1f);
+			ImGui::Separator();
+			if (ImGui::Button("ResetRotate")) {
+				obb2.transfrom.get_quaternion() = Quaternion{};
+			}
+			Vector3 quaternion = Vec3::kZero;
+			if (ImGui::DragFloat3("RotateLocal", &quaternion.x, 0.01f, -PI, PI)) {
+				obb2.transfrom.get_quaternion() = Quaternion{ quaternion } *obb2.transfrom.get_quaternion();
+			}
+			Vector3 cood = Vec3::kZero;
+			if (ImGui::DragFloat3("RotateWorld", &cood.x, 0.02f)) {
+				obb2.transfrom.get_quaternion() *= Quaternion{ cood, cood.length() };
+			}
+			ImGui::DragFloat3("Translate", const_cast<float*>(&obb2.transfrom.get_translate().x), 0.1f);
+			{
+				auto boxResultX = std::minmax(obb2.localVertexis.min.x, obb2.localVertexis.max.x);
+				auto boxResultY = std::minmax(obb2.localVertexis.min.y, obb2.localVertexis.max.y);
+				auto boxResultZ = std::minmax(obb2.localVertexis.min.z, obb2.localVertexis.max.z);
+				obb2.localVertexis.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
+				obb2.localVertexis.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
+			}
+			ImGui::End();
 		}
-		ImGui::DragFloat3("Translate", const_cast<float*>(&obb.transfrom.get_translate().x), 0.1f);
-		{
-			auto boxResultX = std::minmax(obb.localVertexis.min.x, obb.localVertexis.max.x);
-			auto boxResultY = std::minmax(obb.localVertexis.min.y, obb.localVertexis.max.y);
-			auto boxResultZ = std::minmax(obb.localVertexis.min.z, obb.localVertexis.max.z);
-			obb.localVertexis.min = { boxResultX.first, boxResultY.first, boxResultZ.first };
-			obb.localVertexis.max = { boxResultX.second, boxResultY.second, boxResultZ.second };
-		}
-		ImGui::End();
 
-		// 線分
-		ImGui::SetNextWindowPos({ 957,24 }, 0);
-		ImGui::SetNextWindowSize({ 301,80 }, 0);
-		ImGui::Begin("Segment", nullptr, ImGuiWindowFlags_NoSavedSettings);
-		ImGui::DragFloat3("Origin", &segment.origin.x, 0.1f);
-		ImGui::DragFloat3("Diff", &segment.diff.x, 0.1f);
-		ImGui::End();
+		obb1.transfrom.update();
+		obb2.transfrom.update();
 
-		obb.transfrom.update();
-
-		if (IsCollision(obb, segment)) {
+		if (IsCollision(obb1, obb2)) {
 			color = { 1.0f,0.0f,0.0f,1.0f };
 		}
 		else {
@@ -187,10 +278,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		unsigned int hexColor = color.hex();
 		Debug::Grid3D();
-		DrawOBB(obb, hexColor);
-		Vector3 start = Transform3D::Homogeneous(segment.origin, Camera3D::GetVPOVMatrix());
-		Vector3 end = Transform3D::Homogeneous(segment.origin + segment.diff, Camera3D::GetVPOVMatrix());
-		Renderer::DrawLine(start, end, hexColor);
+		DrawOBB(obb1, hexColor);
+		DrawOBB(obb2, hexColor);
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
