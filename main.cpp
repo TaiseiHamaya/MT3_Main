@@ -30,17 +30,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Color color = { 1.0f,1.0f,1.0f,1.0f };
-
-	Transform3D shoulder{ Vec3::kBasis, Quaternion{0,0,-6.8f},{0.2f, 1.0f, 0.0f} };
-	Vector3 shoulderWorldPosition;
-	Sphere shoulderScreen{ {},{1.0f,0.0f,0.0f,1.0f},0.1f, 16 };
-	Transform3D elbow{ Vec3::kBasis, Quaternion{0,0,-1.4f},{0.4f, 0.0f, 0.0f} };
-	Vector3 elbowWorldPosition;
-	Sphere elbowScreen{ {},{0.0f,1.0f,0.0f,1.0f},0.1f, 16 };
-	Transform3D hand{ Vec3::kBasis, Quaternion{0,0,0},{0.3f, 0.0f, 0.0f} };
-	Vector3 handWorldPosition;
-	Sphere handScreen{ {},{0.0f,0.0f,1.0f,1.0f},0.1f, 16 };
+	Vector3 a{ 0.2f, 1.0f, 0.0f };
+	Vector3 b{ 2.4f, 3.1f, 1.2f };
+	Vector3 c = a + b;
+	Vector3 d = a - b;
+	Vector3 e = a * 2.4f;
+	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
+	Matrix4x4 rotateXMatrix = Transform3D::MakeRotateMatrix(rotate.x, 0, 0);
+	Matrix4x4 rotateYMatrix = Transform3D::MakeRotateMatrix(0, rotate.y, 0);
+	Matrix4x4 rotateZMatrix = Transform3D::MakeRotateMatrix(0, 0, rotate.z);
+	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -55,43 +54,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		// カメラ関連
-		Camera3D::DebugGUI();
-		Camera3D::CameraUpdate();
-
-		ImGui::Begin("Window");
-		if (ImGui::TreeNodeEx("Shoulder", ImGuiTreeNodeFlags_DefaultOpen)) {
-			shoulder.debug_gui();
-			ImGui::TreePop();
-		}
-		ImGui::Separator();
-		if (ImGui::TreeNodeEx("Elbow", ImGuiTreeNodeFlags_DefaultOpen)) {
-			elbow.debug_gui();
-			ImGui::TreePop();
-		}
-		ImGui::Separator();
-		if (ImGui::TreeNodeEx("Hand", ImGuiTreeNodeFlags_DefaultOpen)) {
-			hand.debug_gui();
-			ImGui::TreePop();
-		}
-		ImGui::End();
-
-		shoulder.update();
-		elbow.update();
-		hand.update();
-
-		shoulderWorldPosition = Transform3D::Homogeneous(Vec3::kZero, shoulder.get_matrix());
-		elbowWorldPosition = Transform3D::Homogeneous(Vec3::kZero, elbow.get_matrix() * shoulder.get_matrix());
-		handWorldPosition = Transform3D::Homogeneous(Vec3::kZero, hand.get_matrix()* elbow.get_matrix()* shoulder.get_matrix());
-
-		shoulderScreen.get_transform().set_translate(shoulderWorldPosition);
-		elbowScreen.get_transform().set_translate(elbowWorldPosition);
-		handScreen.get_transform().set_translate(handWorldPosition);
-
-		shoulderScreen.begin_rendering();
-		elbowScreen.begin_rendering();
-		handScreen.begin_rendering();
-
 		///
 		/// ----------------------------------------更新処理ここまで----------------------------------------
 		///
@@ -99,12 +61,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
-
-		Debug::Grid3D();
-
-		shoulderScreen.draw();
-		elbowScreen.draw();
-		handScreen.draw();
+		
+		ImGui::Begin("Window");
+		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
+		ImGui::Text("d:%f %f %f", d.x, d.y, d.z);
+		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
+		ImGui::Text(
+			"matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
+			rotateMatrix[0][0], rotateMatrix[0][1], rotateMatrix[0][2],
+			rotateMatrix[0][3], rotateMatrix[1][0], rotateMatrix[1][1],
+			rotateMatrix[1][2], rotateMatrix[1][3], rotateMatrix[2][0],
+			rotateMatrix[2][1], rotateMatrix[2][2], rotateMatrix[2][3],
+			rotateMatrix[3][0], rotateMatrix[3][1], rotateMatrix[3][2],
+			rotateMatrix[3][3]
+		);
+		ImGui::End();
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
