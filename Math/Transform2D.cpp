@@ -72,14 +72,6 @@ Vector2 Transform2D::HomogeneousVector(const Vector2& vector, const Matrix3x3& m
 	return { (vector.x * matrix[0][0] + vector.y * matrix[1][0] + 1.0f * 0) / w, (vector.x * matrix[0][1] + vector.y * matrix[1][1] + 1.0f * 0) / w };
 }
 
-Rect Transform2D::Homogeneous(const Rect& rect, const Matrix3x3& matrix) {
-	return { Transform2D::Homogeneous(rect.topLeft, matrix), Transform2D::Homogeneous(rect.topRight, matrix), Transform2D::Homogeneous(rect.bottomLeft, matrix), Transform2D::Homogeneous(rect.bottomRight, matrix) };
-}
-
-Rect Transform2D::HomogeneousVector(const Rect& rect, const Matrix3x3& matrix) {
-	return { Transform2D::HomogeneousVector(rect.topLeft, matrix), Transform2D::HomogeneousVector(rect.topRight, matrix), Transform2D::HomogeneousVector(rect.bottomLeft, matrix), Transform2D::HomogeneousVector(rect.bottomRight, matrix) };
-}
-
 Transform2D::Transform2D() noexcept {
 	scale = { 1, 1 };
 	rotate = 0;

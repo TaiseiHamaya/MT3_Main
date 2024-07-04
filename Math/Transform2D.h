@@ -2,7 +2,6 @@
 
 #include "Vector2D.h"
 #include "Matrix.h"
-#include "Definition.h"
 
 class Transform2D final {
 public:
@@ -170,20 +169,4 @@ public:// static関数
 	/// <param name="matrix">変換行列</param>
 	/// <returns></returns>
 	static Vector2 HomogeneousVector(const Vector2& vector, const Matrix3x3& matrix);
-
-	/// <summary>
-	/// 長方形構造体を同次座標系乗算
-	/// </summary>
-	/// <param name="rect">変換する長方形</param>
-	/// <param name="matrix">変換行列</param>
-	/// <returns></returns>
-	static Rect Homogeneous(const Rect& rect, const Matrix3x3& matrix);
-
-	/// <summary>
-	/// 長方形構造体を同次座標系乗算(Translateなし)
-	/// </summary>
-	/// <param name="rect">変換する長方形</param>
-	/// <param name="matrix">変換行列</param>
-	/// <returns></returns>
-	static Rect HomogeneousVector(const Rect& rect, const Matrix3x3& matrix);
 };

@@ -1,10 +1,7 @@
 #pragma once
 #include <Novice.h>
-#include <string>
 
 #include "Vector2D.h"
-#include "Matrix.h"
-#include "Transform2D.h"
 #include "Vector3D.h"
 
 class Renderer final {
@@ -34,51 +31,6 @@ public:
 	);
 
 	/// <summary>
-	/// スプライトの描画
-	/// </summary>
-	/// <param name="rect">ローカル頂点</param>
-	/// <param name="spriteSize">スプライトのWH(Vector2)</param>
-	/// <param name="textureName">テクスチャ名</param>
-	/// <param name="move">ワールド座標変換行列</param>
-	/// <param name="camera">スクリーン座標変換行列</param>
-	/// <param name="color">色</param>
-	static void DrawSprite(
-		const Rect& rect, const Vector2& spriteSize, const std::string& textureName, const Matrix3x3& worldMatrix, const Matrix3x3& worldToScreenMatrix = Transform2D::MakeIdentityMatrix(),
-		const unsigned int color = WHITE
-	);
-
-	/// <summary>
-	/// アニメーション付きビットマップを描画
-	/// </summary>
-	/// <param name="rect">ローカル頂点</param>
-	/// <param name="spriteSize">1ビットマップのWH(Vector2)</param>
-	/// <param name="textureName">テクスチャ名</param>
-	/// <param name="frame">アニメーションフレーム数(row)</param>
-	/// <param name="move">ワールド座標変換行列</param>
-	/// <param name="camera">スクリーン座標変換行列</param>
-	/// <param name="color">色</param>
-	static void DrawSpriteAnimation(
-		const Rect& rect, const Vector2& spriteSize, const std::string& textureName, const int frame, const Matrix3x3& move, const Matrix3x3& camera = Transform2D::MakeIdentityMatrix(),
-		const unsigned int color = WHITE
-	);
-
-	/// <summary>
-	/// アニメーション付きビットマップを描画
-	/// </summary>
-	/// <param name="rect">ローカル頂点</param>
-	/// <param name="spriteSize">1ビットマップのWH(Vector2)</param>
-	/// <param name="textureName">テクスチャ名</param>
-	/// <param name="bitmapNum">連番画像(column)</param>
-	/// <param name="frame">アニメーションフレーム数(row)</param>
-	/// <param name="move">ワールド座標変換行列</param>
-	/// <param name="camera">スクリーン座標変換行列</param>
-	/// <param name="color">色</param>
-	static void DrawBitmapAnimation(
-		const Rect& rect, const Vector2& spriteSize, const std::string& textureName, const int bitmapNum, const int frame, const Matrix3x3& worldMatrix, const Matrix3x3& worldToScreenMatrix = Transform2D::MakeScaleMatrix(1, 1),
-		const unsigned int color = WHITE
-	);
-
-	/// <summary>
 	/// 円形ゲージを描画する
 	/// </summary>
 	/// <param name="pos"></param>
@@ -90,8 +42,6 @@ public:
 		const Vector2 pos, const Vector2 radius, const float percentage, const unsigned int color,
 		const int spritehandle
 	);
-
-	static void DrawUI(const Rect& rect, const Vector2& spriteSize, const std::string& textureName, const int frame);
 
 	/// <summary>
 	/// 線を描画
