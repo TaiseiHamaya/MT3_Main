@@ -48,7 +48,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Ball ball;
 
 	spring = {
-		{0,0,0},
+		{0,1,0},
 		1.0f,
 		100.0f,
 		2.0f
@@ -61,6 +61,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Sphere sphere{ {}, {0.0f, 0.0f, 1.0f, 1.0f},0.05f,16 };
 	float deltaTime = 1.0f / 60;
+	const Vector3 gravity{ 0,-9.8f,0.0f };
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -93,6 +94,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Vector3 restPosition = spring.anchor + diff.normalize() * spring.naturalLength;
 			newAcc = (ball.position - restPosition) * (-spring.stiffness * diffLength) / ball.mass + ball.velocity * -spring.danpingConfficient;
 		}
+
+		newAcc += gravity * ball.mass;
 
 		ball.acceleration = newAcc;
 		ball.velocity += ball.acceleration * deltaTime;
