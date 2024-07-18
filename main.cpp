@@ -15,6 +15,20 @@
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
 
+struct Spring {
+	Vector3 anchor;
+	float naturalLength;
+	float stiffness;
+	float danpingConfficient;
+};
+
+struct Ball {
+	Vector3 position;
+	Vector3 velocity;
+	Vector3 acceleration;
+	float mass;
+};
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -30,16 +44,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Vector3 a{ 0.2f, 1.0f, 0.0f };
-	Vector3 b{ 2.4f, 3.1f, 1.2f };
-	Vector3 c = a + b;
-	Vector3 d = a - b;
-	Vector3 e = a * 2.4f;
-	Vector3 rotate{ 0.4f, 1.43f, -0.8f };
-	Matrix4x4 rotateXMatrix = Transform3D::MakeRotateMatrix(rotate.x, 0, 0);
-	Matrix4x4 rotateYMatrix = Transform3D::MakeRotateMatrix(0, rotate.y, 0);
-	Matrix4x4 rotateZMatrix = Transform3D::MakeRotateMatrix(0, 0, rotate.z);
-	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
+	Spring spring;
+	Ball ball;
+
+	spring = {
+		{0,0,0},
+		1.0f,
+		100.0f,
+		2.0f
+	};
+	ball = {
+		{1.2f, 0.0f, 0.0f},
+		Vec3::kZero, Vec3::kZero,
+		2.0f
+	};
+
+	Sphere sphere{ {}, {0.0f, 0.0f, 1.0f, 1.0f},0.05f,16 };
+	float deltaTime = 1.0f / 60;
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -54,6 +75,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
+		ImGui::Begin("Debug");
+		if (ImGui::Button("Start")) {
+			ball = {
+				{1.2f, 0.0f, 0.0f},
+				Vec3::kZero, Vec3::kZero,
+				2.0f
+			};
+		}
+		ImGui::End();
+
+		Vector3 newAcc;
+
+		Vector3 diff = ball.position - spring.anchor;
+		float diffLength = diff.length();
+		if (diffLength != 0) {
+			Vector3 restPosition = spring.anchor + diff.normalize() * spring.naturalLength;
+			newAcc = (ball.position - restPosition) * (-spring.stiffness * diffLength) / ball.mass + ball.velocity * -spring.danpingConfficient;
+		}
+
+		ball.acceleration = newAcc;
+		ball.velocity += ball.acceleration * deltaTime;
+		ball.position += ball.velocity * deltaTime;
+		sphere.get_transform().set_translate(ball.position);
+
+		Camera3D::DebugGUI();
+		Camera3D::CameraUpdate();
+		sphere.begin_rendering();
+
 		///
 		/// ----------------------------------------更新処理ここまで----------------------------------------
 		///
@@ -61,21 +110,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
-		
-		ImGui::Begin("Window");
-		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
-		ImGui::Text("d:%f %f %f", d.x, d.y, d.z);
-		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
-		ImGui::Text(
-			"matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
-			rotateMatrix[0][0], rotateMatrix[0][1], rotateMatrix[0][2],
-			rotateMatrix[0][3], rotateMatrix[1][0], rotateMatrix[1][1],
-			rotateMatrix[1][2], rotateMatrix[1][3], rotateMatrix[2][0],
-			rotateMatrix[2][1], rotateMatrix[2][2], rotateMatrix[2][3],
-			rotateMatrix[3][0], rotateMatrix[3][1], rotateMatrix[3][2],
-			rotateMatrix[3][3]
+
+		Debug::Grid3D();
+
+		Renderer::DrawLine(
+			Transform3D::Homogeneous(spring.anchor, Camera3D::GetVPOVMatrix()),
+			Transform3D::Homogeneous(ball.position, Camera3D::GetVPOVMatrix()),
+			0xffffffff
 		);
-		ImGui::End();
+
+		sphere.draw();
 
 		///
 		/// ----------------------------------------描画処理ここまで----------------------------------------
