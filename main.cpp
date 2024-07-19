@@ -15,16 +15,11 @@
 #include "imgui.h"
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
+float deltaTime;
 
 struct Plane {
 	Vector3 normal; // 法線
 	float distance; // 距離
-};
-
-struct Segment {
-public:
-	Vector3 origin; // 原点
-	Vector3 diff; // 向き
 };
 
 struct Ball {
@@ -34,20 +29,18 @@ struct Ball {
 	float mass;
 };
 
-bool IsCollision(const Plane& plane, const Segment& segment) {
-	float dot = Vector3::DotProduct(plane.normal, segment.diff);
+bool IsCollision(const Plane& plane, const Ball& ball) {
+	float dot = Vector3::DotProduct(plane.normal, -ball.velocity * deltaTime);
 
 	if (dot == 0) {
 		return false;
 	}
-	float t = (plane.distance - Vector3::DotProduct(plane.normal, segment.origin)) / dot;
+	float t = (plane.distance - Vector3::DotProduct(plane.normal, ball.sphere.get_transform().get_translate())) / dot;
 
-	return t >= 0 && t <= 1;
-}
+	Vector3 nearest = ball.sphere.get_transform().get_translate() - ball.velocity * deltaTime * std::clamp(t, 0.0f, 1.0f);
 
-bool IsCollision(const Plane& plane, const Sphere& sphere) {
-	float distance = std::abs(Vector3::DotProduct(plane.normal, sphere.get_transform().get_translate()) - plane.distance);
-	return distance <= sphere.get_radius();
+	float distance = std::abs(Vector3::DotProduct(plane.normal, nearest) - plane.distance);
+	return distance <= ball.sphere.get_radius();
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -65,18 +58,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	float deltaTime = 1.0f / 60;
+	deltaTime = 1.0f / 60;
 	const Vector3 gravity{ 0,-9.8f,0.0f };
 
 	Plane plane;
-	plane.normal = Vector3::Normalize({ -0.2f, 0.9f, -0.3f });
-	plane.distance = 0;
+	plane.normal = -Vector3::Normalize({ -0.3f, 1.2f, -0.4f });
+	//plane.normal = Vec3::kBasisY;
+	plane.distance = 1;
 
 	float e = 0.8f;
 
+	Vector3 resetPosition = { 0.8f,1.2f,0.3f };
+
 	Ball ball;
 	ball.sphere = { {}, { 0.0f, 0.0f, 1.0f, 1.0f }, 0.05f, 16 };
-	ball.sphere.get_transform().set_translate({ 0.8f,1.2f,0.3f });
+	ball.sphere.get_transform().set_translate(resetPosition);
 	ball.mass = 2.0f;
 
 	ball.acceleration = gravity;
@@ -94,14 +90,44 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
+		ImGui::Begin("Debug");
+		if (ImGui::Button("Reset")) {
+			ball.sphere.get_transform().set_translate(resetPosition);
+			ball.velocity = Vec3::kZero;
+		}
+		ImGui::DragFloat3("ResetPosition", &resetPosition.x, 0.05f);
+		ImGui::End();
+
 		ball.velocity += ball.acceleration * deltaTime;
+		Vector3 fromPosition = ball.sphere.get_transform().get_translate();
 		ball.sphere.get_transform().plus_translate(ball.velocity * deltaTime);
 
-		if (IsCollision(plane, ball.sphere)) {
-			Vector3 refrected = Vector3::Reflect(ball.velocity, plane.normal);
+		if (IsCollision(plane, ball)) {
+			// 球が存在した方向を取得
+			float sign = Vector3::DotProduct(plane.normal, fromPosition) - plane.distance < 0 ? -1.0f : 1.0f;
+			
+			float dot = Vector3::DotProduct(plane.normal, -ball.velocity * deltaTime);
+			// sign * radius分面の位置を動かし、衝突時の中心点を求める
+			float t = (plane.distance + (sign * ball.sphere.get_radius()) - Vector3::DotProduct(plane.normal, ball.sphere.get_transform().get_translate())) / dot;
+			// 戻す量
+			Vector3 penetration = -ball.velocity * deltaTime * t;
+			// 平行成分と垂直成分に分離
+			Vector3 vertical = Vector3::Projection(penetration, plane.normal);
+			Vector3 parallel = vertical - penetration;
+			// 接触時まで戻してさらに反発分動く
+			Vector3 nextPosition = ball.sphere.get_transform().get_translate() + penetration + vertical * e + parallel;
+			
+			// Velocity計算
+			// 反射ベクトルを求める
+			Vector3 refrected = Vector3::Reflect(ball.velocity , plane.normal);
+			// 分離
 			Vector3 projNorm = Vector3::Projection(refrected, plane.normal);
 			Vector3 moveDirection = refrected - projNorm;
-			ball.velocity = projNorm * e + moveDirection;
+			// 垂直には反発係数eをかける。反発分の動き中のvelocityを適用。
+			ball.velocity = projNorm * e + moveDirection + ball.acceleration * t * deltaTime;
+
+			// 最後に位置も修正
+			ball.sphere.get_transform().set_translate(nextPosition);
 		}
 
 		Camera3D::DebugGUI();
