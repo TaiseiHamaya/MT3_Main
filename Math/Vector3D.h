@@ -167,6 +167,8 @@ public:
 	static Vector3 Projection(const Vector3& vec1,const Vector3& vec2);
 
 	static Vector3 Clamp(const Vector3& vector, const Vector3& min, const Vector3& max);
+
+	static Vector3 Reflect(const Vector3& input, const Vector3& normal);
 };
 
 // ------------------インライン関数定義------------------

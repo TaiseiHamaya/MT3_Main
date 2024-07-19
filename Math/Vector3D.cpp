@@ -86,3 +86,7 @@ Vector3 Vector3::Projection(const Vector3& vector1, const Vector3& vector2) {
 Vector3 Vector3::Clamp(const Vector3& vector, const Vector3& min, const Vector3& max) {
 	return { std::clamp(vector.x, min.x, max.x),std::clamp(vector.y, min.y, max.y) ,std::clamp(vector.z, min.z, max.z) };
 }
+
+Vector3 Vector3::Reflect(const Vector3& input, const Vector3& normal) {
+	return input - normal * (2 * Vector3::DotProduct(input, normal));
+}
