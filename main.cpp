@@ -16,11 +16,12 @@
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
 
-struct Ball {
-	Vector3 position;
-	Vector3 velocity;
-	Vector3 acceleration;
-	float mass;
+struct Pendulum {
+	Vector3 anchor;
+	float length;
+	float angle;
+	float angleVelocity;
+	float angleAcceleration;
 };
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -38,19 +39,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Vector3 anglarVelocity = { 0,0,PI };
 	float deltaTime = 1.0f / 60;
 	const Vector3 gravity{ 0,-9.8f,0.0f };
 
-	Ball ball;
-	ball = {
-		{1.2f, 0.0f, 0.0f},
-		Vec3::kZero,
-		Vec3::kZero,
-		2.0f
+	Pendulum pendulum;
+	pendulum = {
+		{0.0f, 1.0f, 0.0f},
+		0.8f,
+		0.7f,
+		0.0f,
+		0.0f
 	};
-
-	ball.velocity = Vector3::CrossProduct(anglarVelocity, ball.position);
 
 	Sphere sphere{ {}, {0.0f, 0.0f, 1.0f, 1.0f},0.05f,16 };
 
@@ -67,12 +66,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		float angle2 = Vector3::DotProduct(anglarVelocity, anglarVelocity);
-		Vector3 centripetal = ball.position * -angle2;
-		ball.acceleration = centripetal;
-		ball.velocity += ball.acceleration * deltaTime;
-		ball.position += ball.velocity * deltaTime;
-		sphere.get_transform().set_translate(ball.position);
+		pendulum.angleAcceleration = -std::sin(pendulum.angle) / pendulum.length * -gravity.y;
+		pendulum.angleVelocity += pendulum.angleAcceleration * deltaTime;
+		pendulum.angle += pendulum.angleVelocity * deltaTime;
+		Vector3 tip = pendulum.anchor + Vector3{std::sin(pendulum.angle), -std::cos(pendulum.angle), 0.0f} * pendulum.length;
+		sphere.get_transform().set_translate(tip);
 
 		Camera3D::DebugGUI();
 		Camera3D::CameraUpdate();
