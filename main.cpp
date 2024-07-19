@@ -4,6 +4,7 @@
 #include <DeviceData.h>
 
 #include <algorithm>
+#include <cmath>
 
 #include <Vector3D.h>
 #include <Matrix.h>
@@ -14,13 +15,6 @@
 #include "imgui.h"
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
-
-struct Spring {
-	Vector3 anchor;
-	float naturalLength;
-	float stiffness;
-	float danpingConfficient;
-};
 
 struct Ball {
 	Vector3 position;
@@ -44,24 +38,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Spring spring;
-	Ball ball;
-
-	spring = {
-		{0,1,0},
-		1.0f,
-		100.0f,
-		2.0f
-	};
-	ball = {
-		{1.2f, 0.0f, 0.0f},
-		Vec3::kZero, Vec3::kZero,
-		2.0f
-	};
-
-	Sphere sphere{ {}, {0.0f, 0.0f, 1.0f, 1.0f},0.05f,16 };
+	Vector3 anglarVelocity = { 0,0,PI };
 	float deltaTime = 1.0f / 60;
 	const Vector3 gravity{ 0,-9.8f,0.0f };
+
+	Ball ball;
+	ball = {
+		{1.2f, 0.0f, 0.0f},
+		Vec3::kZero,
+		Vec3::kZero,
+		2.0f
+	};
+
+	ball.velocity = Vector3::CrossProduct(anglarVelocity, ball.position);
+
+	Sphere sphere{ {}, {0.0f, 0.0f, 1.0f, 1.0f},0.05f,16 };
 
 	// ---------------------------------------------ゲームループ---------------------------------------------
 	while (Novice::ProcessMessage() == 0) {
@@ -76,28 +67,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		ImGui::Begin("Debug");
-		if (ImGui::Button("Start")) {
-			ball = {
-				{1.2f, 0.0f, 0.0f},
-				Vec3::kZero, Vec3::kZero,
-				2.0f
-			};
-		}
-		ImGui::End();
-
-		Vector3 newAcc;
-
-		Vector3 diff = ball.position - spring.anchor;
-		float diffLength = diff.length();
-		if (diffLength != 0) {
-			Vector3 restPosition = spring.anchor + diff.normalize() * spring.naturalLength;
-			newAcc = (ball.position - restPosition) * (-spring.stiffness * diffLength) / ball.mass + ball.velocity * -spring.danpingConfficient;
-		}
-
-		newAcc += gravity * ball.mass;
-
-		ball.acceleration = newAcc;
+		float angle2 = Vector3::DotProduct(anglarVelocity, anglarVelocity);
+		Vector3 centripetal = ball.position * -angle2;
+		ball.acceleration = centripetal;
 		ball.velocity += ball.acceleration * deltaTime;
 		ball.position += ball.velocity * deltaTime;
 		sphere.get_transform().set_translate(ball.position);
@@ -115,12 +87,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		Debug::Grid3D();
-
-		Renderer::DrawLine(
-			Transform3D::Homogeneous(spring.anchor, Camera3D::GetVPOVMatrix()),
-			Transform3D::Homogeneous(ball.position, Camera3D::GetVPOVMatrix()),
-			0xffffffff
-		);
 
 		sphere.draw();
 
