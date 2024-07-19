@@ -16,12 +16,12 @@
 
 const char kWindowTitle[] = "LE2A_14_ハマヤ_タイセイ_MT3";
 
-struct Pendulum {
+struct ConicalPendulum {
 	Vector3 anchor;
 	float length;
+	float halfApexAngle;
 	float angle;
 	float angleVelocity;
-	float angleAcceleration;
 };
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -42,8 +42,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float deltaTime = 1.0f / 60;
 	const Vector3 gravity{ 0,-9.8f,0.0f };
 
-	Pendulum pendulum;
-	pendulum = {
+	ConicalPendulum conicalPendulum;
+	conicalPendulum = {
 		{0.0f, 1.0f, 0.0f},
 		0.8f,
 		0.7f,
@@ -66,10 +66,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ----------------------------------------更新処理ここから----------------------------------------
 		///
 
-		pendulum.angleAcceleration = -std::sin(pendulum.angle) / pendulum.length * -gravity.y;
-		pendulum.angleVelocity += pendulum.angleAcceleration * deltaTime;
-		pendulum.angle += pendulum.angleVelocity * deltaTime;
-		Vector3 tip = pendulum.anchor + Vector3{std::sin(pendulum.angle), -std::cos(pendulum.angle), 0.0f} * pendulum.length;
+		conicalPendulum.angleVelocity = std::sqrt(9.8f / (conicalPendulum.length * std::cos(conicalPendulum.halfApexAngle)));
+		conicalPendulum.angle += conicalPendulum.angleVelocity * deltaTime;
+
+		float radius = std::sin(conicalPendulum.halfApexAngle) * conicalPendulum.length;
+		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length;
+		Vector3 tip = conicalPendulum.anchor + Vector3{std::sin(conicalPendulum.angle) * radius, -height, -std::cos(conicalPendulum.angle) * radius};
 		sphere.get_transform().set_translate(tip);
 
 		Camera3D::DebugGUI();
@@ -83,6 +85,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ----------------------------------------描画処理ここから----------------------------------------
 		///
+
+		Renderer::DrawLine(
+			Transform3D::Homogeneous(conicalPendulum.anchor, Camera3D::GetVPOVMatrix()),
+			Transform3D::Homogeneous(tip, Camera3D::GetVPOVMatrix()),
+			0xffffffff
+		);
 
 		Debug::Grid3D();
 
